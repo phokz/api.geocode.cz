@@ -1,4 +1,6 @@
 class AddressesController < ApplicationController
+  after_action :set_cors_header
+
   def autocomplete
     result = Address.autocomplete(params[:term])
     render json: result.map { |a| render_item(a) }
@@ -15,7 +17,7 @@ class AddressesController < ApplicationController
     {
       id: a.id,
       address: a.address,
-      street: a.street.nil? ? nil :  a.street.name,
+      street: a.street.nil? ? nil : a.street.name,
       number: a.number,
       evidence: a.evidence,
       orient: a.orient,
@@ -23,5 +25,9 @@ class AddressesController < ApplicationController
       city: a.city.name,
       city_part: a.city_part.nil? ? nil : a.city_part.name
     }
+  end
+
+  def set_cors_header
+    response.headers['Access-Control-Allow-Origin'] = '*'
   end
 end
