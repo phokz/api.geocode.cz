@@ -8,7 +8,7 @@ class Address < ApplicationRecord
     r = ''
     r << street.name unless street.nil?
     r << city_part.name if street.nil? && !city_part.nil?
-    r << " ev. č." if evidence
+    r << ' ev. č.' if evidence
     r << " #{number}"
     r << "/#{orient}" unless orient.nil?
     r << letter unless letter.nil?
@@ -50,7 +50,7 @@ class Address < ApplicationRecord
       numbers.each do |number|
         obj = obj.where('postcodes.number = ?', number) if number.size == 5
         next if number.size >= 5
-        obj = obj.where(number_conditions, number + '%', number + '%')
+        obj = obj.where(number_conditions, candidates(number), candidates(number))
       end
 
       next if words.empty?
@@ -60,18 +60,23 @@ class Address < ApplicationRecord
     obj.limit(20).all
   end
 
+  def self.candidates(number)
+    return [number] if number.size == 4
+    return [number, (0..9).map{|n| number+n.to_s}].flatten
+  end
+
   def self.number_conditions
-    'addresses.number like ? or addresses.orient like ?'
+    'addresses.number in (?) or addresses.orient in (?)'
   end
 
   def self.words_conditions
     'cities.name like ? or streets.name like ? or city_parts.name like ?'
   end
-  
-  def self.ac_test term
+
+  def self.ac_test(term)
     r = nil
     bm = Benchmark.measure do
-     r = autocomplete(term).map(&:address)
+      r = autocomplete(term).map(&:address)
     end
     puts "Benchmark: #{term}: #{bm.real}"
     r
