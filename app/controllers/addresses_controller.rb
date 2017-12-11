@@ -1,5 +1,5 @@
 class AddressesController < ApplicationController
-  after_action :set_cors_header
+  before_action :set_cors_header
 
   def autocomplete
     result = Address.autocomplete(params[:term])
@@ -8,12 +8,13 @@ class AddressesController < ApplicationController
 
   def show
     address = Address.find(params[:id])
-    render json: render_item(address)
+    coords = Coord.find_by(id: params[:id])
+    render json: render_item(address, coords)
   end
 
   private
 
-  def render_item(a)
+  def render_item(a, coords=nil)
     {
       id: a.id,
       address: a.address,
@@ -23,7 +24,15 @@ class AddressesController < ApplicationController
       orient: a.orient,
       postcode: a.postcode.number,
       city: a.city.name,
-      city_part: a.city_part.nil? ? nil : a.city_part.name
+      city_part: a.city_part.nil? ? nil : a.city_part.name,
+      coordinates: render_coords(coords)
+    }
+  end
+
+  def render_coords(coords)
+    return nil if coords.nil?
+    {
+      jstk: {x: coords.x.to_f, y: coords.y.to_f}
     }
   end
 

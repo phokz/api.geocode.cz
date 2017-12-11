@@ -1,0 +1,2 @@
+class Coord < ApplicationRecord
+end
