@@ -20,6 +20,7 @@ default: &default
 development:
   <<: *default
   database: api_geocode_cz_development
+  databases: api_geocode_cz_development, alt_api_geocode_cz_development
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
@@ -50,5 +51,6 @@ test:
 production:
   <<: *default
   database: api_geocode_cz_production
+  databases: api_geocode_cz_production, alt_api_geocode_cz_production
   username: api_geocode_cz
   password: <%= ENV['API_GEOCODE_CZ_DATABASE_PASSWORD'] %>
