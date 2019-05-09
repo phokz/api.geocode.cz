@@ -1,0 +1,42 @@
+# 1) make table structure in clickhouse
+
+cat <<EOF > create_table_adr
+(
+    ID UInt32,
+    City String,
+    CityPart String,
+    Street String,
+    Postcode Int32,
+    Evidence UInt8,
+    Number UInt16,
+    Orient UInt16,
+    Letter FixedString(1)
+)
+ENGINE = MergeTree() PARTITION BY Postcode ORDER BY (Street, Number, Orient)  SETTINGS index_granularity=8192;
+
+EOF
+
+clickhouse-client --multiline < create_table_adr
+
+# 2) export data from mysql
+
+cat <<EOF > export.sql
+select addresses.id,cities.name,city_parts.name,streets.name,postcodes.number,evidence,addresses.number,IFNULL(orient,0),IFNULL(letter,'') from addresses left outer join cities on (city_id = cities.id) left outer join city_parts on (city_part_id = city_parts.id) left outer join streets on (street_id = streets.id)  left outer join postcodes on (postcode_id = postcodes.id)
+EOF
+
+mysql \
+   --default-character-set=utf8 --database=geocode \
+   --batch --raw < export.sql > export.csv
+
+# 3) import data to clickouse
+
+cat export.csv | clickhouse-client --query="INSERT INTO addresses FORMAT CSV"
+
+
+# 4) profit
+
+clickhouse-client --multiline
+
+# example query:
+# select * from addresses where (Evidence = 1 or (Evidence >= 10 and Evidence <= 19) or Orient = 1 or (Orient >= 10 and Orient <= 19)) and (City like 'Bře%' or CityPart like 'Bře%' or Street like 'Bře%') and Digit = 1 and Postcode = 25101;
+
